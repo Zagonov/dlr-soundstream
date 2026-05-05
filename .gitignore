@@ -1,0 +1,12 @@
+project_template_base/
+project_template_image/
+project_template_asr/
+__pycache__/
+.DS_Store
+.python-version
+data/
+.vscode/
+README.md
+2107.03312v1.pdf
+test.py
+
