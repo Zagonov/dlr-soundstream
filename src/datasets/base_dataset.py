@@ -2,16 +2,13 @@ import logging
 import random
 
 import numpy as np
-import torch
 import torchaudio
-import torch.nn.functional as F
 from torch.utils.data import Dataset
 
 logger = logging.getLogger(__name__)
 
 
 class BaseDataset(Dataset):
-
     def __init__(
         self,
         index,
@@ -74,7 +71,6 @@ class BaseDataset(Dataset):
         return audio_tensor
 
     def crop(self, audio):
-
         audio_len = audio.shape[-1]
 
         if audio_len > self.segment_size:
@@ -84,11 +80,9 @@ class BaseDataset(Dataset):
         return audio
 
     def get_spectrogram(self, audio):
-
         return self.instance_transforms["get_spectrogram"](audio)
 
     def preprocess_data(self, instance_data):
-    
         for transform_name, transform in self.instance_transforms.items():
             if transform_name == "get_spectrogram":
                 continue
@@ -113,7 +107,8 @@ class BaseDataset(Dataset):
 
         if total > 0:
             logger.info(
-                f"{total} ({total / initial_size:.1%}) records are longer than "
+                f"{total} ({total / initial_size: .1%}) records"
+                f" are longer than "
                 f"{max_audio_length} seconds. Excluding them."
             )
 
@@ -126,13 +121,11 @@ class BaseDataset(Dataset):
     @staticmethod
     def _assert_index_is_valid(index):
         for entry in index:
-            assert "path" in entry, (
-                "Each dataset item should include field 'path' - path to audio file."
-            )
+            assert "path" in entry, "Each dataset item should include "
+            "field 'path' - path to audio file."
 
-            assert "audio_len" in entry, (
-                "Each dataset item should include field 'audio_len' - audio length."
-            )
+            assert "audio_len" in entry, "Each dataset item should include "
+            "field 'audio_len' - audio length."
 
     @staticmethod
     def _sort_index(index):

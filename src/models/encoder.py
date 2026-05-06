@@ -1,5 +1,6 @@
 from torch import nn
-from residual_unit import ResidualUnit
+
+from src.models.residual_unit import ResidualUnit
 
 
 class EncoderBlock(nn.Module):
@@ -19,7 +20,9 @@ class EncoderBlock(nn.Module):
             ResidualUnit(n_channels // 2, dilation=9),
             nn.ELU(),
             nn.ConstantPad1d((stride, 0), 0),
-            nn.Conv1d(n_channels // 2, n_channels, kernel_size=2 * stride, stride=stride)
+            nn.Conv1d(
+                n_channels // 2, n_channels, kernel_size=2 * stride, stride=stride
+            ),
         )
 
     def forward(self, x):
@@ -39,15 +42,13 @@ class Encoder(nn.Module):
         self.net = nn.Sequential(
             nn.ConstantPad1d((7 - 1, 0), 0),
             nn.Conv1d(1, n_channels, kernel_size=7),
-
             EncoderBlock(n_channels * 2, strides[0]),
             EncoderBlock(n_channels * 4, strides[1]),
             EncoderBlock(n_channels * 8, strides[2]),
             EncoderBlock(n_channels * 16, strides[3]),
             nn.ELU(),
-
             nn.ConstantPad1d((3 - 1, 0), 0),
-            nn.Conv1d(n_channels * 16, out_channels, kernel_size=3)
+            nn.Conv1d(n_channels * 16, out_channels, kernel_size=3),
         )
 
     def forward(self, x):

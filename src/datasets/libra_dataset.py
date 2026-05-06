@@ -12,7 +12,7 @@ from src.utils.io_utils import ROOT_PATH
 
 URL_LINKS = {
     "test-clean": "https://www.openslr.org/resources/12/test-clean.tar.gz",
-    "train-clean-100": "https://www.openslr.org/resources/12/train-clean-100.tar.gz"
+    "train-clean-100": "https://www.openslr.org/resources/12/train-clean-100.tar.gz",
 }
 
 
