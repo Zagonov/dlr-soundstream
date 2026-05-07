@@ -54,7 +54,4 @@ class ReconstructionLoss(nn.Module):
                 * torch.linalg.vector_norm(log_gen_spec - log_target_spec, dim=-2).sum()
             )
 
-        return {
-            "loss": loss,
-            "reconstruction_loss": loss,
-        }
+        return {"loss": loss}
