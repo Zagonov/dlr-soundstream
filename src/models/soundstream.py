@@ -14,7 +14,7 @@ class SoundStream(nn.Module):
         self.encoder = Encoder(n_channels, latent_channels, strides)
         self.decoder = Decoder(latent_channels, n_channels, strides)
 
-    def forward(self, x):
-        latent = self.encoder(x)
+    def forward(self, audio, **batch):
+        latent = self.encoder(audio)
         generated = self.decoder(latent)
         return {"generated": generated}

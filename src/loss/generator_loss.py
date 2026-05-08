@@ -1,8 +1,8 @@
 from torch import nn
 
-from src.loss.feature import FeatureLoss
-from src.loss.gan import GeneratorAdvLoss
-from src.loss.reconstruction import ReconstructionLoss
+from src.loss.feature_loss import FeatureLoss
+from src.loss.generator_adv_loss import GeneratorAdvLoss
+from src.loss.reconstruction_loss import ReconstructionLoss
 
 
 class GeneratorLoss(nn.Module):
@@ -18,19 +18,20 @@ class GeneratorLoss(nn.Module):
     def forward(
         self,
         generated,
-        target,
+        audio,
         generated_logits,
         generated_feature_maps,
         target_feature_maps,
+        **batch
     ):
-        rec = self.reconstruction_loss(generated, target)["loss"]
+        rec = self.reconstruction_loss(generated, audio)["loss"]
         adv = self.adversarial_loss(generated_logits)["loss"]
         feat = self.feature_loss(generated_feature_maps, target_feature_maps)["loss"]
 
         loss = self.lambda_rec * rec + self.lambda_adv * adv + self.lambda_feat * feat
 
         return {
-            "loss": loss,
+            "generator_loss": loss,
             "reconstruction_loss": rec,
             "generator_adv_loss": adv,
             "feature_loss": feat,

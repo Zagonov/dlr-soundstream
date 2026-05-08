@@ -1,7 +1,6 @@
 import torch
 from torch import nn
 from torch.nn.utils import weight_norm
-from torchaudio.transforms import Spectrogram
 
 
 class ResidualUnit2D(nn.Module):
@@ -158,21 +157,35 @@ class Discriminator(nn.Module):
         self.stft_discriminator = STFTDiscriminator()
         self.wave_discriminator = WaveDiscriminator()
 
-    def forward(self, audio):
-        stft_out = self.stft_discriminator(audio)
-        wave_out = self.wave_discriminator(audio)
+    def forward(self, audio, generated, **batch):
+        stft_real_out = self.stft_discriminator(audio)
+        stft_gen_out = self.stft_discriminator(generated)
+        wave_real_out = self.wave_discriminator(audio)
+        wave_gen_out = self.wave_discriminator(generated)
 
-        feature_maps = [
-            stft_out["feature map"],
-            *wave_out["feature map"],
+        target_feature_maps = [
+            stft_real_out["feature map"],
+            *wave_real_out["feature map"],
         ]
 
-        logits = [
-            stft_out["logits"],
-            *wave_out["logits"],
+        target_logits = [
+            stft_real_out["logits"],
+            *wave_real_out["logits"],
+        ]
+
+        generated_feature_maps = [
+            stft_gen_out["feature map"],
+            *wave_gen_out["feature map"],
+        ]
+
+        generated_logits = [
+            stft_gen_out["logits"],
+            *wave_gen_out["logits"],
         ]
 
         return {
-            "feature map": feature_maps,
-            "logits": logits,
+            "target_feature_maps": target_feature_maps,
+            "generated_feature_maps": generated_feature_maps,
+            "target_logits": target_logits,
+            "generated_logits": generated_logits,
         }

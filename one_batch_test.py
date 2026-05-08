@@ -1,8 +1,10 @@
 import torch
 from torch.utils.data import DataLoader
 
-from src.datasets import LibrispeechDataset
-from src.loss.reconstruction import ReconstructionLoss
+from src.datasets.libra_dataset import LibrispeechDataset
+from src.loss.discriminator_loss import DiscriminatorLoss
+from src.loss.generator_loss import GeneratorLoss
+from src.models.discriminator import Discriminator
 from src.models.soundstream import SoundStream
 
 
@@ -42,29 +44,53 @@ def main():
         collate_fn=lambda items: collate_audio(items, 8000),
     )
     batch = next(iter(loader))
-    audio = batch["audio"].to(device)
+    # audio = batch["audio"].to(device)
 
-    model = SoundStream(n_channels=32, latent_channels=128, strides=[2, 4, 5, 5]).to(
-        device
+    generator = SoundStream(
+        n_channels=32, latent_channels=128, strides=[2, 4, 5, 5]
+    ).to(device)
+    discriminator = Discriminator().to(device)
+
+    g_criterion = GeneratorLoss().to(device)
+    d_criterion = DiscriminatorLoss().to(device)
+    g_optimizer = torch.optim.Adam(generator.parameters(), lr=1e-4, betas=(0.5, 0.9))
+    d_optimizer = torch.optim.Adam(
+        discriminator.parameters(), lr=1e-4, betas=(0.5, 0.9)
     )
-    criterion = ReconstructionLoss().to(device)
-    # optimizer = torch.optim.Adam(model.parameters(),
-    # lr=1e-4, betas=(0.5, 0.9))
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-    model.train()
+
+    generator.train()
+    discriminator.train()
 
     for iteration in range(1000):
-        optimizer.zero_grad()
+        g_output = generator(**batch)
+        batch.update(g_output)
 
-        outputs = model(audio)
-        losses = criterion(generated=outputs["generated"], audio=audio)
-        loss = losses["loss"]
+        # обучение дискриминатора
+        d_optimizer.zero_grad()
+        d_output = discriminator(
+            audio=batch["audio"], generated=batch["generated"].detach()
+        )
+        batch.update(d_output)
+        d_loss = d_criterion(**batch)
+        batch.update(d_loss)
+        d_loss["discriminator_loss"].backward()
+        d_optimizer.step()
 
-        loss.backward()
-        optimizer.step()
+        # обучение генератора
+        g_optimizer.zero_grad()
+        d_output = discriminator(**batch)
+        batch.update(d_output)
+        g_loss = g_criterion(**batch)
+        batch.update(g_loss)
+        g_loss["generator_loss"].backward()
+        g_optimizer.step()
 
         print(f"iteration: {iteration}")
-        print(f"loss: {loss.item(): .6f}")
+        print(f"g_loss: {batch['generator_loss']}")
+        print(f"d_loss: {batch['discriminator_loss']}")
+        print(f"gen_adv_loss: {batch['generator_adv_loss']}")
+        print(f"feature_loss: {batch['feature_loss']}")
+        print(f"reconstruction_loss: {batch['reconstruction_loss']}")
 
 
 if __name__ == "__main__":
