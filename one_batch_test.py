@@ -2,10 +2,9 @@ import torch
 from torch.utils.data import DataLoader
 
 from src.datasets.libra_dataset import LibrispeechDataset
-from src.loss.discriminator_loss import DiscriminatorLoss
-from src.loss.generator_loss import GeneratorLoss
-from src.models.discriminator import Discriminator
-from src.models.soundstream import SoundStream
+from src.loss import DiscriminatorLoss, GeneratorLoss
+from src.metrics import CodebookPerplexityMetric, NISQAMetric, STOIMetric
+from src.models import Discriminator, SoundStream
 
 
 def match_length(audio, target_length):
@@ -44,11 +43,19 @@ def main():
         collate_fn=lambda items: collate_audio(items, 8000),
     )
     batch = next(iter(loader))
-    # audio = batch["audio"].to(device)
+    batch["audio"] = batch["audio"].to(device)
 
     generator = SoundStream(
-        n_channels=32, latent_channels=128, strides=[2, 4, 5, 5]
+        n_channels=32,
+        latent_channels=128,
+        strides=[2, 4, 5, 5],
+        num_quantizers=8,
+        codebook_size=128,
+        gamma=0.99,
+        kmeans_n_iters=20,
+        code_threshold=2,
     ).to(device)
+
     discriminator = Discriminator().to(device)
 
     g_criterion = GeneratorLoss().to(device)
@@ -58,12 +65,24 @@ def main():
         discriminator.parameters(), lr=1e-4, betas=(0.5, 0.9)
     )
 
+    stoi = STOIMetric(sr=16000)
+    nisqa = NISQAMetric(sr=16000)
+    perplexity = CodebookPerplexityMetric(codebook_size=128)
+
     generator.train()
     discriminator.train()
 
     for iteration in range(1000):
         g_output = generator(**batch)
         batch.update(g_output)
+
+        metrics = {
+            "STOI": stoi(**batch),
+            "NISQA": nisqa(**batch),
+            "Perplexity": perplexity(**batch),
+        }
+
+        batch.update(metrics)
 
         # обучение дискриминатора
         d_optimizer.zero_grad()
@@ -91,6 +110,10 @@ def main():
         print(f"gen_adv_loss: {batch['generator_adv_loss']}")
         print(f"feature_loss: {batch['feature_loss']}")
         print(f"reconstruction_loss: {batch['reconstruction_loss']}")
+        print(f"commitment_loss: {batch['commitment_loss']}")
+        print(f"STOI: {batch['STOI']}")
+        print(f"NISQA: {batch['NISQA']}")
+        print(f"Perplexity: {batch['Perplexity']}")
 
 
 if __name__ == "__main__":
