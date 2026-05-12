@@ -1,0 +1,13 @@
+defaults:
+  - model: baseline
+  - metrics: main
+  - datasets: librispeech
+  - dataloader: main
+  - _self_
+
+inferencer:
+  device_tensors: ["audio"]
+  device: auto
+  save_path: "inference_outputs"
+  seed: 1
+  from_pretrained: "saved/model_best.pth"

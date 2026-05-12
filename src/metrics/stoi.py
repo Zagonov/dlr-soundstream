@@ -10,8 +10,9 @@ class STOIMetric(BaseMetric):
         self.metric = ShortTimeObjectiveIntelligibility(fs=sr)
 
     def __call__(self, generated, audio, **batch):
-        generated = generated.squeeze(1)
-        audio = audio.squeeze(1)
+        generated = generated.detach().cpu().squeeze(1)
+        audio = audio.detach().cpu().squeeze(1)
         value = self.metric(generated, audio)
+        self.metric.reset()
 
         return value.item()

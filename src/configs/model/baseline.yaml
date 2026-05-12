@@ -1,0 +1,13 @@
+generator:
+  _target_: src.models.SoundStream
+  n_channels: 32
+  latent_channels: 128
+  strides: [2, 4, 5, 5]
+  num_quantizers: 8
+  codebook_size: 1024
+  gamma: 0.99
+  kmeans_n_iters: 20
+  code_threshold: 2.0
+
+discriminator:
+  _target_: src.models.Discriminator

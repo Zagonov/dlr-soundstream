@@ -10,8 +10,9 @@ class NISQAMetric(BaseMetric):
         self.metric = NonIntrusiveSpeechQualityAssessment(fs=sr)
 
     def __call__(self, generated, **batch):
-        generated = generated.squeeze(1)
-        value = self.metric(generated.detach())
+        generated = generated.detach().cpu().squeeze(1)
+        value = self.metric(generated)
         mos = value[0]
 
+        self.metric.reset()
         return mos.item()

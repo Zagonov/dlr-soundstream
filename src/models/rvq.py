@@ -25,9 +25,17 @@ class VectorQuantizer(nn.Module):
 
     def kmeans_init(self, residual, n_iters):
         n_vectors = residual.shape[0]
-        random_indices = torch.randperm(n_vectors, device=residual.device)[
-            : self.codebook_size
-        ]
+        if n_vectors >= self.codebook_size:
+            random_indices = torch.randperm(n_vectors, device=residual.device)[
+                : self.codebook_size
+            ]
+        else:
+            random_indices = torch.randint(
+                low=0,
+                high=n_vectors,
+                size=(self.codebook_size,),
+                device=residual.device,
+            )
         centroids = residual[random_indices]
 
         for _ in range(n_iters):

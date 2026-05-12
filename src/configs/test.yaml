@@ -1,0 +1,49 @@
+defaults:
+  - model: baseline
+  - writer: cometml
+  - metrics: main
+  - datasets: librispeech
+  - dataloader: main
+  - _self_
+
+optimizer:
+  generator:
+    _target_: torch.optim.Adam
+    lr: 1e-4
+    betas: [0.5, 0.9]
+  discriminator:
+    _target_: torch.optim.Adam
+    lr: 1e-4
+    betas: [0.5, 0.9]
+
+lr_scheduler: null
+
+loss_function:
+  generator:
+    _target_: src.loss.GeneratorLoss
+    lambda_rec: 1
+    lambda_adv: 1
+    lambda_feat: 100
+    lambda_commitment: 1
+  discriminator:
+    _target_: src.loss.DiscriminatorLoss
+
+trainer:
+  total_steps: 10
+  epoch_len: ${trainer.total_steps}
+  log_step: 1
+  audio_log_step: 1
+  num_audio_log_examples: 3
+  eval_step: 1
+  eval_max_batches: 5
+  final_eval: True
+  final_eval_max_batches: 5
+  save_step: 2
+  device_tensors: ["audio"]
+  resume_from: null
+  device: auto
+  override: True
+  monitor: "max test_STOI"
+  early_stop: ${trainer.total_steps}
+  save_dir: "saved"
+  seed: 1

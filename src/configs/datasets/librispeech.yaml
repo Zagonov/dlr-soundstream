@@ -1,0 +1,17 @@
+train:
+  _target_: src.datasets.LibrispeechDataset
+  part: "train-clean-100"
+  data_dir: null
+  index_dir: "saved/indices/librispeech"
+  target_sr: 16000
+  segment_size: 8000
+  shuffle_index: True
+
+test:
+  _target_: src.datasets.LibrispeechDataset
+  part: "test-clean"
+  data_dir: ${datasets.train.data_dir}
+  index_dir: ${datasets.train.index_dir}
+  target_sr: ${datasets.train.target_sr}
+  segment_size: null
+  shuffle_index: False

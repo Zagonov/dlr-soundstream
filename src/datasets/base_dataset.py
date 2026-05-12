@@ -18,7 +18,7 @@ class BaseDataset(Dataset):
         max_audio_length=None,
         shuffle_index=False,
         instance_transforms=None,
-        return_spectrogram=True,
+        return_spectrogram=False,
     ):
         self._assert_index_is_valid(index)
 
@@ -71,6 +71,9 @@ class BaseDataset(Dataset):
         return audio_tensor
 
     def crop(self, audio):
+        if self.segment_size is None:
+            return audio
+
         audio_len = audio.shape[-1]
 
         if audio_len > self.segment_size:

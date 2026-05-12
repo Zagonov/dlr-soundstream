@@ -6,11 +6,14 @@ from src.loss.reconstruction_loss import ReconstructionLoss
 
 
 class GeneratorLoss(nn.Module):
-    def __init__(self, lambda_rec=1, lambda_adv=1, lambda_feat=100):
+    def __init__(
+        self, lambda_rec=1, lambda_adv=1, lambda_feat=100, lambda_commitment=1
+    ):
         super().__init__()
         self.lambda_rec = lambda_rec
         self.lambda_adv = lambda_adv
         self.lambda_feat = lambda_feat
+        self.lambda_commitment = lambda_commitment
         self.reconstruction_loss = ReconstructionLoss()
         self.adversarial_loss = GeneratorAdvLoss()
         self.feature_loss = FeatureLoss()
@@ -22,13 +25,20 @@ class GeneratorLoss(nn.Module):
         generated_logits,
         generated_feature_maps,
         target_feature_maps,
+        commitment_loss,
         **batch
     ):
         rec = self.reconstruction_loss(generated, audio)["loss"]
         adv = self.adversarial_loss(generated_logits)["loss"]
         feat = self.feature_loss(generated_feature_maps, target_feature_maps)["loss"]
+        commitment = commitment_loss
 
-        loss = self.lambda_rec * rec + self.lambda_adv * adv + self.lambda_feat * feat
+        loss = (
+            self.lambda_rec * rec
+            + self.lambda_adv * adv
+            + self.lambda_feat * feat
+            + self.lambda_commitment * commitment
+        )
 
         return {
             "generator_loss": loss,

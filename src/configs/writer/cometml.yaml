@@ -1,0 +1,14 @@
+_target_: src.logger.CometMLWriter
+project_name: "soundstream"
+workspace: null
+run_name: "soundstream-1"
+mode: "online"
+loss_names:
+  - generator_loss
+  - discriminator_loss
+  - reconstruction_loss
+  - generator_adv_loss
+  - feature_loss
+  - commitment_loss
+log_checkpoints: False
+id_length: 32

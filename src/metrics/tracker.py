@@ -1,6 +1,3 @@
-import pandas as pd
-
-
 class MetricTracker:
     """
     Class to aggregate metrics from many batches.
@@ -16,30 +13,36 @@ class MetricTracker:
                 from each batch.
         """
         self.writer = writer
-        self._data = pd.DataFrame(index=keys, columns=["total", "counts", "average"])
+        self._keys = list(keys)
         self.reset()
 
     def reset(self):
         """
         Reset all metrics after epoch end.
         """
-        for col in self._data.columns:
-            self._data[col].values[:] = 0
+        self._data = {
+            key: {
+                "total": 0.0,
+                "counts": 0.0,
+                "average": 0.0,
+            }
+            for key in self._keys
+        }
 
     def update(self, key, value, n=1):
         """
-        Update metrics DataFrame with new value.
+        Update metrics data with new value.
 
         Args:
             key (str): metric name.
             value (float): metric value on the batch.
             n (int): how many times to count this value.
         """
-        # if self.writer is not None:
-        #     self.writer.add_scalar(key, value)
-        self._data.loc[key, "total"] += value * n
-        self._data.loc[key, "counts"] += n
-        self._data.loc[key, "average"] = self._data.total[key] / self._data.counts[key]
+        self._data[key]["total"] += float(value) * n
+        self._data[key]["counts"] += n
+        self._data[key]["average"] = (
+            self._data[key]["total"] / self._data[key]["counts"]
+        )
 
     def avg(self, key):
         """
@@ -50,7 +53,7 @@ class MetricTracker:
         Returns:
             average_value (float): average value for the metric.
         """
-        return self._data.average[key]
+        return self._data[key]["average"]
 
     def result(self):
         """
@@ -60,13 +63,13 @@ class MetricTracker:
             average_metrics (dict): dict, containing average metrics
                 for each metric name.
         """
-        return dict(self._data.average)
+        return {key: values["average"] for key, values in self._data.items()}
 
     def keys(self):
         """
         Return all metric names defined in the MetricTracker.
 
         Returns:
-            metric_keys (Index): all metric names in the table.
+            metric_keys (list[str]): all metric names.
         """
-        return self._data.total.keys()
+        return self._keys

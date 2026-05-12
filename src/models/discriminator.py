@@ -24,8 +24,9 @@ class ResidualUnit2D(nn.Module):
         self.skip = nn.Conv2d(
             n_channels,
             m * n_channels,
-            kernel_size=(1, 1),
+            kernel_size=(sf + 2, st + 2),
             stride=(sf, st),
+            padding=(1, 1),
         )
 
     def forward(self, audio):
