@@ -32,10 +32,10 @@ trainer:
   total_steps: 45000
   epoch_len: ${trainer.total_steps}
   log_step: 50
-  audio_log_step: 1000
-  num_audio_log_examples: 5
+  audio_log_step: 500
+  num_audio_log_examples: 3
   eval_step: 500
-  eval_max_batches: 20
+  eval_max_batches: 200
   final_eval: True
   final_eval_max_batches: -1
   save_step: 5000

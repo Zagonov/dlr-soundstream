@@ -45,13 +45,17 @@ class ReconstructionLoss(nn.Module):
         for transform, window_size in zip(self.transforms, self.window_sizes):
             gen_spec = transform(generated)
             target_spec = transform(audio)
-            loss += torch.abs(gen_spec - target_spec).sum()
+            loss += torch.abs(gen_spec - target_spec).mean()
             log_gen_spec = torch.log(gen_spec + 1e-6)
             log_target_spec = torch.log(target_spec + 1e-6)
             alpha = sqrt(window_size / 2)
             loss += (
                 alpha
-                * torch.linalg.vector_norm(log_gen_spec - log_target_spec, dim=-2).sum()
+                * torch.linalg.vector_norm(
+                    log_gen_spec - log_target_spec, dim=-2
+                ).mean()
             )
+
+        loss = loss / len(self.transforms)
 
         return {"loss": loss}
