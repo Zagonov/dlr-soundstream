@@ -13,7 +13,7 @@ class Trainer(BaseTrainer):
 
         batch_size = batch["audio"].shape[0]
 
-        if self.is_train:
+        if self.is_train and self.use_gan:
             self.discriminator_optimizer.zero_grad()
             batch.update(
                 self.discriminator(
@@ -37,9 +37,25 @@ class Trainer(BaseTrainer):
                 self.discriminator_lr_scheduler.step()
 
             metric_funcs = self.metrics["train"]
-        else:
+
+        elif self.is_train:
+            self.generator_optimizer.zero_grad()
+            batch.update(self.generator_criterion(**batch))
+            batch["generator_loss"].backward()
+            self.generator_optimizer.step()
+
+            if self.generator_lr_scheduler is not None:
+                self.generator_lr_scheduler.step()
+
+            metric_funcs = self.metrics["train"]
+
+        elif self.use_gan:
             batch.update(self.discriminator(**batch))
             batch.update(self.discriminator_criterion(**batch))
+            batch.update(self.generator_criterion(**batch))
+            metric_funcs = self.metrics["inference"]
+
+        else:
             batch.update(self.generator_criterion(**batch))
             metric_funcs = self.metrics["inference"]
 

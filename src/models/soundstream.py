@@ -47,6 +47,24 @@ class SoundStream(nn.Module):
             code_threshold,
         )
 
+    def quantized_from_indices(self, indices):
+        quantized = 0
+        for quantizer_idx, quantizer in enumerate(self.rvq.quantizers):
+            quantized = quantized + quantizer.codebook[indices[:, :, quantizer_idx]]
+        return quantized
+
+    def decode_from_indices(self, indices):
+        quantized = self.quantized_from_indices(indices)
+        generated = self.decoder(quantized.transpose(1, 2))
+
+        return generated
+
+    def get_indices(self, audio):
+        latent = self.encoder(audio)
+        latent = latent.transpose(1, 2)
+        rvq_output = self.rvq(latent)
+        return rvq_output["indices"]
+
     def forward(self, audio, **batch):
         latent = self.encoder(audio)
         latent = latent.transpose(1, 2)

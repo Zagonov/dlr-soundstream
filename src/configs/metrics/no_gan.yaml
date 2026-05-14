@@ -1,0 +1,13 @@
+train:
+  - _target_: src.metrics.STOIMetric
+    sr: 16000
+  - _target_: src.metrics.CodebookPerplexityMetric
+    codebook_size: 1024
+
+inference:
+  - _target_: src.metrics.STOIMetric
+    sr: 16000
+  - _target_: src.metrics.NISQAMetric
+    sr: 16000
+  - _target_: src.metrics.CodebookPerplexityMetric
+    codebook_size: 1024

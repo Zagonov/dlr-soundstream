@@ -29,6 +29,7 @@ loss_function:
     _target_: src.loss.DiscriminatorLoss
 
 trainer:
+  use_gan: True
   total_steps: 10
   epoch_len: ${trainer.total_steps}
   log_step: 1

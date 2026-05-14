@@ -22,15 +22,24 @@ class GeneratorLoss(nn.Module):
         self,
         generated,
         audio,
-        generated_logits,
-        generated_feature_maps,
-        target_feature_maps,
         commitment_loss,
+        generated_logits=None,
+        generated_feature_maps=None,
+        target_feature_maps=None,
         **batch
     ):
         rec = self.reconstruction_loss(generated, audio)["loss"]
-        adv = self.adversarial_loss(generated_logits)["loss"]
-        feat = self.feature_loss(generated_feature_maps, target_feature_maps)["loss"]
+        zero = rec.new_zeros(())
+        adv = zero
+        feat = zero
+
+        if self.lambda_adv != 0:
+            adv = self.adversarial_loss(generated_logits)["loss"]
+        if self.lambda_feat != 0:
+            feat = self.feature_loss(generated_feature_maps, target_feature_maps)[
+                "loss"
+            ]
+
         commitment = commitment_loss
 
         loss = (

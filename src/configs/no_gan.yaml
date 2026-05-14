@@ -1,7 +1,7 @@
 defaults:
   - model: baseline
-  - writer: cometml
-  - metrics: main
+  - writer: no_gan
+  - metrics: no_gan
   - datasets: librispeech
   - dataloader: main
   - _self_
@@ -22,14 +22,14 @@ loss_function:
   generator:
     _target_: src.loss.GeneratorLoss
     lambda_rec: 1
-    lambda_adv: 1
-    lambda_feat: 100
+    lambda_adv: 0
+    lambda_feat: 0
     lambda_commitment: 1
   discriminator:
     _target_: src.loss.DiscriminatorLoss
 
 trainer:
-  use_gan: True
+  use_gan: False
   total_steps: 45000
   epoch_len: ${trainer.total_steps}
   log_step: 50

@@ -46,6 +46,7 @@ class BaseTrainer:
         self.eval_max_batches = config.trainer.get("eval_max_batches", 10)
         self.final_eval = config.trainer.get("final_eval", True)
         self.final_eval_max_batches = config.trainer.get("final_eval_max_batches", -1)
+        self.use_gan = config.trainer.get("use_gan", True)
 
         self.generator = generator
         self.discriminator = discriminator
@@ -118,7 +119,8 @@ class BaseTrainer:
             self.global_step = step
             self.is_train = True
             self.generator.train()
-            self.discriminator.train()
+            if self.discriminator is not None:
+                self.discriminator.train()
 
             try:
                 batch = self.process_batch(
@@ -171,7 +173,8 @@ class BaseTrainer:
     def _evaluation_part(self, part, dataloader, max_batches=None, mode="eval"):
         self.is_train = False
         self.generator.eval()
-        self.discriminator.eval()
+        if self.discriminator is not None:
+            self.discriminator.eval()
         self.evaluation_metrics.reset()
         last_batch = None
 
@@ -272,12 +275,14 @@ class BaseTrainer:
         state = {
             "step": step,
             "generator": self.generator.state_dict(),
-            "discriminator": self.discriminator.state_dict(),
             "generator_optimizer": self.generator_optimizer.state_dict(),
-            "discriminator_optimizer": self.discriminator_optimizer.state_dict(),
             "monitor_best": self.mnt_best,
             "config": self.config,
         }
+        if self.discriminator is not None:
+            state["discriminator"] = self.discriminator.state_dict()
+        if self.discriminator_optimizer is not None:
+            state["discriminator_optimizer"] = self.discriminator_optimizer.state_dict()
         if self.generator_lr_scheduler is not None:
             state["generator_lr_scheduler"] = self.generator_lr_scheduler.state_dict()
         if self.discriminator_lr_scheduler is not None:
@@ -304,11 +309,16 @@ class BaseTrainer:
         self.start_step = checkpoint["step"] + 1
         self.mnt_best = checkpoint["monitor_best"]
         self.generator.load_state_dict(checkpoint["generator"])
-        self.discriminator.load_state_dict(checkpoint["discriminator"])
         self.generator_optimizer.load_state_dict(checkpoint["generator_optimizer"])
-        self.discriminator_optimizer.load_state_dict(
-            checkpoint["discriminator_optimizer"]
-        )
+        if self.discriminator is not None and "discriminator" in checkpoint:
+            self.discriminator.load_state_dict(checkpoint["discriminator"])
+        if (
+            self.discriminator_optimizer is not None
+            and "discriminator_optimizer" in checkpoint
+        ):
+            self.discriminator_optimizer.load_state_dict(
+                checkpoint["discriminator_optimizer"]
+            )
         if (
             self.generator_lr_scheduler is not None
             and "generator_lr_scheduler" in checkpoint

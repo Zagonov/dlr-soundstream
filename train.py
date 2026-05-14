@@ -35,16 +35,22 @@ def main(config):
 
     # setup data loader instances
     dataloaders, batch_transforms = get_dataloaders(config, device)
+    use_gan = config.trainer.get("use_gan", True)
 
     # build model architectures, then print to console
     generator = instantiate(config.model.generator).to(device)
-    discriminator = instantiate(config.model.discriminator).to(device)
+    discriminator = None
+    if use_gan:
+        discriminator = instantiate(config.model.discriminator).to(device)
     logger.info(generator)
-    logger.info(discriminator)
+    if discriminator is not None:
+        logger.info(discriminator)
 
     # get function handles of loss and metrics
     generator_loss = instantiate(config.loss_function.generator).to(device)
-    discriminator_loss = instantiate(config.loss_function.discriminator).to(device)
+    discriminator_loss = None
+    if use_gan:
+        discriminator_loss = instantiate(config.loss_function.discriminator).to(device)
 
     metrics = {"train": [], "inference": []}
     for metric_type in ["train", "inference"]:
@@ -57,10 +63,12 @@ def main(config):
         config.optimizer.generator,
         params=generator.parameters(),
     )
-    discriminator_optimizer = instantiate(
-        config.optimizer.discriminator,
-        params=discriminator.parameters(),
-    )
+    discriminator_optimizer = None
+    if use_gan:
+        discriminator_optimizer = instantiate(
+            config.optimizer.discriminator,
+            params=discriminator.parameters(),
+        )
 
     generator_lr_scheduler = None
     discriminator_lr_scheduler = None
@@ -70,7 +78,7 @@ def main(config):
                 config.lr_scheduler.generator,
                 optimizer=generator_optimizer,
             )
-        if config.lr_scheduler.get("discriminator") is not None:
+        if use_gan and config.lr_scheduler.get("discriminator") is not None:
             discriminator_lr_scheduler = instantiate(
                 config.lr_scheduler.discriminator,
                 optimizer=discriminator_optimizer,
@@ -97,7 +105,6 @@ def main(config):
         logger=logger,
         writer=writer,
         batch_transforms=batch_transforms,
-        skip_oom=config.trainer.get("skip_oom", True),
     )
 
     trainer.train()
